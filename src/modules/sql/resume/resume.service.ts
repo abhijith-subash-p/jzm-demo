@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { ModelService, SqlJob, SqlService } from '@core/sql';
 import { Injectable } from '@nestjs/common';
 import { Resume } from './entities/resume.entity';
@@ -5,6 +6,8 @@ import { Resume } from './entities/resume.entity';
 import * as path from 'path';
 import { promises as fsPromises } from 'fs';
 import * as libre from 'libreoffice-convert';
+import uniqid from 'uniqid';
+import { SolrClient } from 'src/config/solr';
 
 @Injectable()
 export class ResumeService extends ModelService<Resume> {
@@ -18,34 +21,61 @@ export class ResumeService extends ModelService<Resume> {
     super(db);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   protected async doBeforeRead(job: SqlJob<Resume>): Promise<void> {
     // libre.convertAsync = require('util').promisify(libre.convert);
+
     const ext = '.html';
-    const inputPath = path.join(__dirname, '../public/docIn/sample.pdf');
+    const inputPath = path.join(__dirname, '../public/docIn/sample.doc');
     const outputPath = path.join(__dirname, `../public/docOut/out_put${ext}`);
     await this.convertFileToHtml(inputPath, outputPath, ext);
+
     return;
   }
 
+  /* 
+  Convert Files to HTML
+  */
   async convertFileToHtml(
     inPath: string,
     outPath: string,
     ext: string,
-  ): Promise<string> {
+  ): Promise<{ path?: string; response?: any; error: any }> {
     return new Promise(async (resolve, reject) => {
       console.log('File conversion init');
       const docxBuf = await fsPromises.readFile(inPath);
-      libre.convert(docxBuf, ext, undefined, (error, res) => {
-        if (error) {
+      libre.convert(docxBuf, ext, undefined, async (error, res) => {
+        if ({ path: undefined, response: undefined, error: error }) {
           console.log('ERROR', error);
           reject(error);
         }
         console.log('RES', res);
         fsPromises.writeFile(outPath, res);
         console.log('File conversion completed');
-        resolve('File converted');
+
+        const htmlReadData = await fsPromises.readFile(outPath, 'utf-8'),
+          unique_id = Math.floor(Math.random() * 1000000) + 1,
+          solrData = {
+            unique_id: unique_id,
+            html_content: htmlReadData,
+          },
+          response = await this.solrAdd(solrData);
+        console.log(htmlReadData);
+        console.log('HTML ADDED RES', response);
+
+        resolve({ path: outPath, response: res, error: null });
       });
     });
+  }
+
+  /* 
+  Add Data to SOLR Server
+  */
+  async solrAdd(data: any) {
+    try {
+      const res = await SolrClient.add(data);
+      return res;
+    } catch (error) {
+      return error;
+    }
   }
 }
