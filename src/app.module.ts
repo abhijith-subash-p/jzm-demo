@@ -7,6 +7,7 @@ import { CoreModule } from './core/core.module';
 import { CommonModule } from './modules/common.module';
 import { SqlModule } from '@core/sql';
 import { EmailModule } from '@core/email';
+import { ResumeModule } from './modules/sql/resume/resume.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { EmailModule } from '@core/email';
     CommonModule.register(),
     SqlModule.root({ seeder: true }),
     EmailModule,
+    ResumeModule,
   ],
   controllers: [AppController],
   providers: [AppService, AppGateway],
