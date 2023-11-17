@@ -277,4 +277,37 @@ export class ResumeController {
     }
     return Result(res, { data: { [entity]: data }, message: 'Deleted' });
   }
+
+  /**
+   * Return all entity documents list
+   */
+  @Get('resume-search')
+  @ApiOperation({ summary: `Get all Resume` })
+  @ApiQueryGetAll()
+  @ResponseGetAll(Resume)
+  async resumeSearch(
+    @Res() res: Response,
+    @Owner() owner: OwnerDto,
+    @Query() query: any,
+  ) {
+    console.log('query', query);
+
+    const { error, data, offset, limit, count } =
+      await this.resumeService.resumeSear({
+        owner,
+        action: 'resumeSear',
+        payload: { ...query },
+      });
+
+    if (error) {
+      return ErrorResponse(res, {
+        error,
+        message: `${error.message || error}`,
+      });
+    }
+    return Result(res, {
+      data: { [pluralizeString(entity)]: data, offset, limit, count },
+      message: 'Ok',
+    });
+  }
 }

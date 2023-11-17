@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { ModelService, SqlJob, SqlService } from '@core/sql';
+import { ModelService, SqlGetAllResponse, SqlJob, SqlService } from '@core/sql';
 import { Injectable } from '@nestjs/common';
 import { Resume } from './entities/resume.entity';
 
@@ -21,15 +21,36 @@ export class ResumeService extends ModelService<Resume> {
     super(db);
   }
 
-  protected async doBeforeRead(job: SqlJob<Resume>): Promise<void> {
-    // libre.convertAsync = require('util').promisify(libre.convert);
+  // protected async doBeforeRead(job: SqlJob<Resume>): Promise<void> {
+  //   // libre.convertAsync = require('util').promisify(libre.convert);
 
-    const ext = '.html';
-    const inputPath = path.join(__dirname, '../public/docIn/sample.doc');
-    const outputPath = path.join(__dirname, `../public/docOut/out_put${ext}`);
-    await this.convertFileToHtml(inputPath, outputPath, ext);
+  //   const ext = '.html';
+  //   const inputPath = path.join(__dirname, '../public/docIn/sample.doc');
+  //   const outputPath = path.join(__dirname, `../public/docOut/out_put${ext}`);
+  //   await this.convertFileToHtml(inputPath, outputPath, ext);
+
+  //   return;
+  // }
+
+  protected async doAfterFindAll(
+    job: SqlJob<Resume>,
+    response: SqlGetAllResponse<Resume>,
+  ): Promise<void> {
+    const solrSearchRes = await this.solrSearch('HTML PUBLIC');
+    console.log('SEARCH REsPonse', solrSearchRes);
 
     return;
+  }
+
+  /* 
+  
+  Resume Search
+  */
+  async resumeSear(job: SqlJob<Resume>) {
+    console.log('job');
+
+    console.log('JOB', job);
+    return { error: null, data: undefined, offset: 10, limit: 10, count: 0 };
   }
 
   /* 
@@ -77,5 +98,16 @@ export class ResumeService extends ModelService<Resume> {
     } catch (error) {
       return error;
     }
+  }
+
+  async solrSearch(params: any) {
+    const queryParameters = {
+      q: `html_content:${params}`, // Search in the html_content field
+      rows: 10, // Number of rows to return
+    };
+
+    // Use the Solr client to perform the search
+    const searchRes = await SolrClient.search(queryParameters);
+    console.log(searchRes);
   }
 }
