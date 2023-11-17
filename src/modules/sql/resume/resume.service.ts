@@ -25,8 +25,8 @@ export class ResumeService extends ModelService<Resume> {
     // libre.convertAsync = require('util').promisify(libre.convert);
 
     const ext = '.html';
-    const inputPath = path.join(__dirname, '../public/docIn/dummy.pdf');
-    const outputPath = path.join(__dirname, `../public/docOut/out_put${ext}`);
+    const inputPath = path.join(__dirname, '../public/docIn/sample.doc');
+    const outputPath = path.join(__dirname, `../public/docOut/sample${ext}`);
     await this.convertFileToHtml(inputPath, outputPath, ext);
 
     return;
@@ -118,10 +118,14 @@ export class ResumeService extends ModelService<Resume> {
 
   /* 
   Search Solar Data
+  IMPORTANT:{
+    term*: Matches terms that start with "term".
+    *term*: Matches terms that contain "term" anywhere in the term.
+    term*suffix: Matches terms that start with "term" and end with "suffix".
+    *term: Matches terms that end with "term".
+  }
   */
   async solrSearch(params: any) {
-    console.log(params);
-
     const queryParameters = {
       q: `html_content:${params}`, // Search in the html_content field
       rows: 10, // Number of rows to return
