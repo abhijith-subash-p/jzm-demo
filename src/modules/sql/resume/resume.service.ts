@@ -101,6 +101,8 @@ export class ResumeService extends ModelService<Resume> {
   }
 
   async solrSearch(params: any) {
+    console.log(params);
+
     const queryParameters = {
       q: `html_content:${params}`, // Search in the html_content field
       rows: 10, // Number of rows to return
