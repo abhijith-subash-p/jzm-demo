@@ -21,16 +21,16 @@ export class ResumeService extends ModelService<Resume> {
     super(db);
   }
 
-  // protected async doBeforeRead(job: SqlJob<Resume>): Promise<void> {
-  //   // libre.convertAsync = require('util').promisify(libre.convert);
+  protected async doBeforeRead(job: SqlJob<Resume>): Promise<void> {
+    // libre.convertAsync = require('util').promisify(libre.convert);
 
-  //   const ext = '.html';
-  //   const inputPath = path.join(__dirname, '../public/docIn/sample.doc');
-  //   const outputPath = path.join(__dirname, `../public/docOut/out_put${ext}`);
-  //   await this.convertFileToHtml(inputPath, outputPath, ext);
+    const ext = '.html';
+    const inputPath = path.join(__dirname, '../public/docIn/dummy.pdf');
+    const outputPath = path.join(__dirname, `../public/docOut/out_put${ext}`);
+    await this.convertFileToHtml(inputPath, outputPath, ext);
 
-  //   return;
-  // }
+    return;
+  }
 
   protected async doAfterFindAll(
     job: SqlJob<Resume>,
@@ -43,14 +43,30 @@ export class ResumeService extends ModelService<Resume> {
   }
 
   /* 
-  
   Resume Search
   */
-  async resumeSear(job: SqlJob<Resume>) {
-    console.log('job');
+  async resumeSearch(job: SqlJob<Resume>) {
+    const { search } = job.payload;
+    console.log(search);
 
-    console.log('JOB', job);
-    return { error: null, data: undefined, offset: 10, limit: 10, count: 0 };
+    const { response } = await this.solrSearch(search);
+    console.log('REAL SEARCH', response);
+
+    return { error: null, data: response, offset: 10, limit: 10, count: 0 };
+  }
+
+  /* 
+  Resume Search
+  */
+  async resumeDelete(job: SqlJob<Resume>) {
+    console.log('delete', job);
+    const { payload } = job;
+    console.log('ID', payload.id);
+
+    const delRes = await this.solrDeleteById(payload.id);
+    console.log('DEL RES', delRes);
+
+    return { error: null, data: delRes, offset: 10, limit: 10, count: 0 };
   }
 
   /* 
@@ -100,6 +116,9 @@ export class ResumeService extends ModelService<Resume> {
     }
   }
 
+  /* 
+  Search Solar Data
+  */
   async solrSearch(params: any) {
     console.log(params);
 
@@ -110,6 +129,18 @@ export class ResumeService extends ModelService<Resume> {
 
     // Use the Solr client to perform the search
     const searchRes = await SolrClient.search(queryParameters);
-    console.log(searchRes);
+    return searchRes;
+    console.log('SEARCH', searchRes);
+  }
+
+  /* 
+  Delete Data from the solr using ID
+  */
+  async solrDeleteById(id: any) {
+    console.log(id);
+    // Use the Solr client to perform the search
+    const deleteRes = await SolrClient.deleteByID(id);
+    console.log('DEL RES', deleteRes);
+    return deleteRes;
   }
 }
